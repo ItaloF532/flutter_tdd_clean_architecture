@@ -1,5 +1,8 @@
-import 'package:flutter_tdd_clean_architecture/data/http/http_cliente.dart';
+import 'package:flutter_tdd_clean_architecture/data/http/http_error.dart';
+import 'package:flutter_tdd_clean_architecture/data/http/http_client.dart';
+import 'package:flutter_tdd_clean_architecture/data/models/remote_account_model.dart';
 import 'package:flutter_tdd_clean_architecture/domain/entities/account_entity.dart';
+import 'package:flutter_tdd_clean_architecture/domain/helpers/domain_error.dart';
 import 'package:flutter_tdd_clean_architecture/domain/use_cases/authentication_use_case.dart';
 
 class RemoteAuthenticationUseCaseRequestDTO {
@@ -36,12 +39,28 @@ class RemoteAuthenticationUseCase implements AuthenticationUseCase {
     required this.httpClient,
   });
 
-  Future<void>? auth(AuthenticationUseCaseRequestDTO authParams) async {
-    await httpClient.request(
-      url: url,
-      method: 'post',
-      body:
-          RemoteAuthenticationUseCaseRequestDTO.fromDomain(authParams).toJson(),
-    );
+  @override
+  Future<AccountEntity?> auth(
+      AuthenticationUseCaseRequestDTO authParams) async {
+    try {
+      final response = await httpClient.request(
+        url: url,
+        method: 'post',
+        body: RemoteAuthenticationUseCaseRequestDTO.fromDomain(authParams)
+            .toJson(),
+      );
+
+      if (response != null) {
+        return RemoteAccountModel.fromJson(response).toDomain();
+      }
+
+      return null;
+    } on HttpError catch (err) {
+      if (err == HttpError.unauthorized) {
+        throw DomainError.invalidCredentials;
+      }
+
+      throw DomainError.unexpected;
+    }
   }
 }

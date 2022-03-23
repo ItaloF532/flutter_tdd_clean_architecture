@@ -18,5 +18,5 @@ class AuthenticationUseCaseRequestDTO {
 }
 
 abstract class AuthenticationUseCase {
-  Future<void>? auth(AuthenticationUseCaseRequestDTO auth);
+  Future<AccountEntity?> auth(AuthenticationUseCaseRequestDTO auth);
 }
